@@ -1,7 +1,7 @@
 resource "hcp_hvn" "c7-hcp-hvn" {
   hvn_id         = "c7-network"
   cloud_provider = "aws"
-  region         = "eu-west-2"
+  region         = var.region
   cidr_block     = "172.25.16.0/20"
 }
 
