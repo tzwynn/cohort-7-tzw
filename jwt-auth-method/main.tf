@@ -1,3 +1,14 @@
+resource "vault_jwt_auth_backend" "c7-jwt-vault" {
+    description         = "Demonstration of the Terraform JWT auth backend"
+    path                = "jwt"
+    oidc_discovery_url  = "https://app.terraform.io"
+    bound_issuer        = "https://app.terraform.io"
+}
+
+resource "vault_policy" "c7-jwt-vault-policy" {
+  name = "admin-policy"
+
+  policy = <<EOT
 path "auth/*"
 {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
@@ -45,4 +56,20 @@ path "sys/mounts/example" {
 }
 path "example/*" {
   capabilities = ["create", "read", "update", "patch", "delete", "list"]
+}
+EOT
+}
+
+resource "vault_jwt_auth_backend_role" "c7-jwt-admin-role" {
+  backend = vault_jwt_auth_backend.c7-jwt-vault.path
+  role_name = var.role-name
+  token_policies = [vault_policy.c7-jwt-vault-policy.name]
+  bound_audiences = [var.bound_audiences]
+  bound_claims_type = "glob"
+  bound_claims = {
+    sub = "organization:${var.organization-name}:project:${var.project-name}:workspace:*:run_phase:*"
+  }
+  user_claim = "terraform_full_workspace"
+  role_type  = "jwt"
+  token_ttl  = 1200
 }
