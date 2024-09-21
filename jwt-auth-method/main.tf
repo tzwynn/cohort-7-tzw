@@ -67,7 +67,7 @@ resource "vault_jwt_auth_backend_role" "c7-jwt-admin-role" {
   backend = vault_jwt_auth_backend.c7-jwt-vault.path
   role_name = "admin-role"
   token_policies = [vault_policy.c7-jwt-vault-policy.name]
-  bound_audiences = ["vault.worklaod.identity"]
+  bound_audiences = ["vault.workload.identity"]
   bound_claims_type = "glob"
   bound_claims = {
     sub = "organization:cohort-7-tzw:project:Default Project:workspace:*:run_phase:*"
