@@ -67,7 +67,7 @@ resource "vault_jwt_auth_backend_role" "c7-jwt-admin-role" {
   bound_audiences = ["vault.worklaod.identity"]
   bound_claims_type = "glob"
   bound_claims = {
-    sub = "organization:${var.organization-name}:project:${var.project-name}:workspace:*:run_phase:*"
+    sub = "organization:cohort-7-tzw:project:Default Project:workspace:*:run_phase:*"
   }
   user_claim = "terraform_full_workspace"
   role_type  = "jwt"
