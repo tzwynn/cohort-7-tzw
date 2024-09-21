@@ -57,13 +57,16 @@ path "sys/mounts/example" {
 path "example/*" {
   capabilities = ["create", "read", "update", "patch", "delete", "list"]
 }
+path "kvv2/*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
 EOT
 }
 
 resource "vault_jwt_auth_backend_role" "c7-jwt-admin-role" {
   backend = vault_jwt_auth_backend.c7-jwt-vault.path
   role_name = "admin-role"
-  token_policies = ["vault_policy.c7-jwt-vault-policy.name"]
+  token_policies = [vault_policy.c7-jwt-vault-policy.name]
   bound_audiences = ["vault.worklaod.identity"]
   bound_claims_type = "glob"
   bound_claims = {
