@@ -39,10 +39,10 @@ path "sys/mounts"
 {
   capabilities = ["read"]
 }
-path "aws-master-account/" {
+path "aws-master/" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
-path "aws-master-account/*" {
+path "aws-master/*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
 path "sys/policy/*" {
