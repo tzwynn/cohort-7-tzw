@@ -3,7 +3,7 @@ output "role_name" {
   
 }
 
-output "openid_claims" {
-    value = vault_jwt_auth_backend.c7-jwt-vault.bound_claims
+# output "openid_claims" {
+#     value = vault_jwt_auth_backend.c7-jwt-vault.bound_claims
   
-}
+# }
