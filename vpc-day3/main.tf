@@ -32,7 +32,7 @@ resource "aws_route_table" "c7-public-rt" {
 resource "aws_route_table_association" "public" {
   count = length(var.public-cidr-block)
   subnet_id      = aws_subnet.c7-public-subnet[count.index].id
-  route_table_id = aws_route_table.c7-public-rt
+  route_table_id = aws_route_table.c7-public-rt.id
 }
 
 resource "aws_internet_gateway" "c7-public-gw" {
