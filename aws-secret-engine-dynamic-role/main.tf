@@ -17,6 +17,11 @@ resource "vault_aws_secret_backend_role" "admin-access-role" {
 
 }
 
+resource "time_sleep" "wait_before_fetching_creds" {
+  depends_on      = [vault_aws_secret_backend_role.vpc_role]
+  create_duration = "10s"
+}
+
 #Retriving the role data
 data "vault_aws_access_credentials" "creds" {
   backend = vault_aws_secret_backend.aws.path
