@@ -14,7 +14,7 @@ resource "aws_vpc_peering_connection_accepter" "peer" {
 resource "hcp_hvn_route" "hvn-to-private" {
   for_each         = data.aws_subnet.private
   hvn_link         = data.hcp_hvn.hvn.self_link
-  hvn_route_id     = "hvn-to-private"
+  hvn_route_id     = each.value.id
   destination_cidr = each.value.cidr_block
   target_link      = hcp_aws_network_peering.hvn-to-vpc.self_link
 }
@@ -22,7 +22,7 @@ resource "hcp_hvn_route" "hvn-to-private" {
 resource "hcp_hvn_route" "hvn-to-db" {
   for_each         = data.aws_subnet.db
   hvn_link         = data.hcp_hvn.hvn.self_link
-  hvn_route_id     = "hvn-to-db"
+  hvn_route_id     = each.value.id
   destination_cidr = each.value.cidr_block
   target_link      = hcp_aws_network_peering.hvn-to-vpc.self_link
 }
