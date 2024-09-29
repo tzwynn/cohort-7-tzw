@@ -65,5 +65,5 @@ data "aws_route_table" "private_rt" {
 
 #creating a route table entry for db subnet
 data "aws_route_table" "db_rt" {
-  subnet_id = data.aws_subnets.private.ids[0]
+  subnet_id = data.aws_subnets.db.ids[0]
 }
