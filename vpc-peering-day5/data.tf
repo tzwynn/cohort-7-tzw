@@ -27,7 +27,7 @@ data "aws_subnets" "private" {
   }
 
   tags = {
-    Name = "c7-private"
+    Name = "c7-private*"
   }
 }
 
@@ -49,7 +49,7 @@ data "aws_subnets" "db" {
   }
 
   tags = {
-    Name = "c7-db"
+    Name = "c7-db*"
   }
 }
 
