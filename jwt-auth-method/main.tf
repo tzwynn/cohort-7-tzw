@@ -51,6 +51,12 @@ path "sys/policy/*" {
 path "sys/policy/" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
+path "sys/policies/*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+path "sys/policies/" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
 path "sys/mounts/example" {
   capabilities = ["create", "read", "update", "patch", "delete", "list"]
 }
