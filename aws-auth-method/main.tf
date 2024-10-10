@@ -41,6 +41,11 @@ path "aws-master/*" {
 EOT
 }
 
+resource "time_sleep" "wait_before_creating_role" {
+  depends_on      = [aws_iam_role.ec2_role]
+  create_duration = "20s"
+}
+
 #Creating a role
 resource "vault_aws_auth_backend_role" "db_role" {
   backend                         = vault_auth_backend.aws_auth.path
