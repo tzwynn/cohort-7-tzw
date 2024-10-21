@@ -11,16 +11,16 @@ resource "aws_iam_access_key" "aws_auth_user_key" {
 
 #creating policy document
 data "aws_iam_policy_document" "aws_auth_user_policy" {
- statement {
+  statement {
     sid    = "VaultAWSAuthMethod"
     effect = "Allow"
     actions = [
-        "ec2:DescribeInstances",
-        "iam:GetInstanceProfile",
-        "iam:GetUser",
-        "iam:ListRoles",
-        "iam:GetRole"
-     ]
+      "ec2:DescribeInstances",
+      "iam:GetInstanceProfile",
+      "iam:GetUser",
+      "iam:ListRoles",
+      "iam:GetRole"
+    ]
     resources = ["*"]
   }
 }
@@ -48,6 +48,12 @@ data "aws_iam_policy_document" "assume_role" {
 
 #creating IAM role
 resource "aws_iam_role" "ec2_role" {
-  name = "aws-auth-ec2-role"
+  name               = "aws-auth-ec2-role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+#Creating instance profile
+resource "aws_iam_instance_profile" "vault-client" {
+  name = "vault-client-instance-profile"
+  role = aws_iam_role.ec2_role.id
 }
