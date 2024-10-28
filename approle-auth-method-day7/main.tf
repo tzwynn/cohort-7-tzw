@@ -11,7 +11,7 @@ resource "vault_policy" "aws_approle-policy" {
 path "aws-master/*" {
   capabilities = ["read"]
 }
-path "db/* {
+path "db/*" {
   capabilities = ["read"]
 }
 EOT
