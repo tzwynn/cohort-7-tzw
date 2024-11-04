@@ -1,0 +1,30 @@
+#exit_after_auth = true
+pid_file = "/home/vagrant/pidfile"
+auto_auth {
+   method "approle" {
+       mount_path = "auth/approle"
+       namespace = "admin"
+       config = {
+           role_id_file_path = "/home/vagrant/role_id"
+           secret_id_file_path = "/home/vagrant/secret_id"
+           remove_secret_id_file_after_reading = false
+       }
+   }
+   sink "file" {
+       config = {
+           path = "/home/vagrant/vault_token"
+       }
+   }
+}
+vault {
+   address = "*************"
+}
+template_config {
+  exit_on_retry_failure = true
+  max_connections_per_host = 20
+  lease_renewal_threshold = 0.90
+}
+template {
+  source = "/home/ubuntu/aws-tmpl.tmpl"
+  destination  = "/tmp/agent/render-content.txt"
+}

@@ -1,0 +1,182 @@
+#!/usr/bin/env bash
+##--------------------------------------------------------------------
+## Install Dependencies:
+##--------------------------------------------------------------------
+sudo apt-get -y update
+sudo apt-get -y install net-tools
+sudo apt -y install python3.12-venv
+sudo apt-get -y install mysql-client
+mysql --version
+##--------------------------------------------------------------------
+## Install Vault
+##--------------------------------------------------------------------
+sudo apt -y update && sudo apt -y install gpg wget
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt -y update && sudo apt -y install vault
+vault version
+##--------------------------------------------------------------------
+## Database Setup:
+##--------------------------------------------------------------------
+cat << EOF > /home/ubuntu/mysql-script.sh
+#!/bin/bash
+# Create the 'vault' user and grant privileges
+mysql -h${MYSQL_HOST} -u${MYSQL_USER} -p${MYSQL_PASS} -e "
+CREATE USER IF NOT EXISTS 'vault'@'%' IDENTIFIED BY 'vault';
+GRANT CREATE USER ON *.* TO 'vault'@'%';
+GRANT ALL PRIVILEGES ON projectdb.* TO 'vault'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+"
+# Create the database and table, then insert data
+mysql -h${MYSQL_HOST} -u${MYSQL_USER} -p${MYSQL_PASS} -e "
+USE projectdb;
+CREATE TABLE IF NOT EXISTS CUSTOMERS (
+    ID INT AUTO_INCREMENT,
+    NAME VARCHAR(20) NOT NULL,
+    AGE INT NOT NULL,
+    ADDRESS CHAR(25),
+    SALARY DECIMAL(18, 2),
+    PRIMARY KEY (ID)
+);
+INSERT INTO CUSTOMERS (ID, NAME, AGE, ADDRESS, SALARY) VALUES
+(1, 'Ramesh', 32, 'Ahmedabad', 2000.00),
+(2, 'Khilan', 25, 'Delhi', 1500.00),
+(3, 'Kaushik', 23, 'Kota', 2000.00),
+(4, 'Chaitali', 25, 'Mumbai', 6500.00),
+(5, 'Hardik', 27, 'Bhopal', 8500.00),
+(6, 'Komal', 22, 'Hyderabad', 4500.00),
+(7, 'Muffy', 24, 'Indore', 10000.00);
+"
+echo "Database setup complete!"
+EOF
+##--------------------------------------------------------------------
+## DB Setup
+##--------------------------------------------------------------------
+sudo chmod +x /home/ubuntu/mysql-script.sh
+sudo /home/ubuntu/mysql-script.sh
+##--------------------------------------------------------------------
+## Template file
+##--------------------------------------------------------------------
+cat << EOF > /home/ubuntu/mysql-tmpl.tmpl
+{{ with secret "db/creds/readwrite-role" }} 
+Username: {{ .Data.username }} 
+Password: {{ .Data.password }}{{ end }}
+EOF
+sudo chown ubuntu:ubuntu /home/ubuntu/mysql-tmpl.tmpl
+sudo chmod 0775 /home/ubuntu/mysql-tmpl.tmpl
+##--------------------------------------------------------------------
+## Vault Agent Configuration:
+##--------------------------------------------------------------------
+cat << EOF > /home/ubuntu/vault-agent.hcl
+#exit_after_auth = true
+pid_file = "/home/ubuntu/pidfile"
+auto_auth {
+   method "aws" {
+       mount_path = "auth/aws"
+       namespace = "admin"
+       config = {
+           type = "iam"
+           role = "db-role"
+       }
+   }
+   sink "file" {
+       config = {
+           path = "/home/ubuntu/vault_token"
+       }
+   }
+}
+vault {
+   address = "${tpl_vault_server_addr}"
+}
+listener "tcp" {
+  address = "127.0.0.1:8007"
+  tls_disable = true
+}
+cache {
+  use_auto_auth_token = true
+}
+template_config {
+  exit_on_retry_failure = true
+  max_connections_per_host = 20
+  lease_renewal_threshold = 0.90
+}
+template {
+  source = "/home/ubuntu/mysql-tmpl.tmpl"
+  destination  = "/tmp/agent/render-content.txt"
+}
+EOF
+sudo chown ubuntu:ubuntu /home/ubuntu/vault-agent.hcl
+sudo chmod 0775 /home/ubuntu/vault-agent.hcl
+#  contents     = "{{ with secret \"db/creds/readwrite-role\" }} Username: {{ .Data.username }} Password: {{ .Data.password }}{{ end }}"
+##--------------------------------------------------------------------
+## Vault Agent Service
+##--------------------------------------------------------------------
+sudo chown ubuntu:ubuntu /usr/bin/vault
+cat << EOF > /lib/systemd/system/vault-agent.service
+[Unit]
+Description="HashiCorp Vault - A tool for managing secrets"
+Documentation=https://developer.hashicorp.com/vault/docs
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/vault.d/vault.hcl
+StartLimitIntervalSec=60
+StartLimitBurst=3
+[Service]
+Type=notify
+EnvironmentFile=/etc/vault.d/vault.env
+User=ubuntu
+Group=ubuntu
+ProtectSystem=full
+PrivateDevices=yes
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+NoNewPrivileges=yes
+ExecStart=/usr/bin/vault agent -config=/home/ubuntu/vault-agent.hcl -log-level=debug
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+LimitCORE=0
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo chmod 0664 /lib/systemd/system/vault-agent.service
+sudo systemctl daemon-reload
+systemctl enable vault-agent
+##--------------------------------------------------------------------
+## Create Vault.py
+##--------------------------------------------------------------------
+mkdir /home/ubuntu/python
+cat << EOF > /home/ubuntu/python/vault.py
+import hvac
+import json
+def pretty_print_response(response):
+    print(json.dumps(response, indent=2, sort_keys=True))
+VAULT_URL='http://127.0.0.1:8007'
+# You must get the Vault token from the Sink file to use it
+with open("/home/ubuntu/vault_token") as f:
+        VAULT_TOKEN = f.readlines()
+        VAULT_TOKEN = VAULT_TOKEN[0].strip('\n')
+print(f'Vault token = {VAULT_TOKEN}')
+client = hvac.Client(url=VAULT_URL, token=VAULT_TOKEN, namespace='admin')
+current_token = client.lookup_token()
+pretty_print_response(current_token)
+print('This is the current token: ', current_token)
+# Read the data written under path: secret/data/test
+read_response = client.secrets.database.generate_credentials(
+    name='readwrite-role', mount_point='db')
+pretty_print_response(read_response)
+print(f"Here is the DB Username: {read_response['data']['username']}")
+print(f"Here is the DB Password: {read_response['data']['password']}")
+with open("response.txt", "w") as f:
+    f.write(f"Username: {read_response['data']['username']}\nPassword: {read_response['data']['password']}\n")
+    f.close()
+EOF
+sudo chown ubuntu:ubuntu /home/ubuntu/python/ -R
+sudo chmod 0775 /home/ubuntu/python/vault.py

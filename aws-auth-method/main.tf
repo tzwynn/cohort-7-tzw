@@ -56,3 +56,4 @@ resource "vault_aws_auth_backend_role" "db_role" {
   token_max_ttl                   = 600
   token_policies                  = [vault_policy.db_policy.name]
 }
+

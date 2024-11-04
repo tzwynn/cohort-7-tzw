@@ -1,5 +1,5 @@
 variable "iam-user-name" {
-    type = string
-    default = "vault-admin"
-  
+  type    = string
+  default = "vault-admin"
+
 }

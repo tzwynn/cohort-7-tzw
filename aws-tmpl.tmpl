@@ -1,0 +1,3 @@
+{{ with secret "aws-master/creds/admin-access-role" }} 
+AWS_ACCESS_KEY_ID: {{ .Data.access_key }} 
+AWS_SECRET_ACCESS_KEY: {{ .Data.secret_key }}{{ end }}
