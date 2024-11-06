@@ -48,6 +48,7 @@ resource "time_sleep" "wait_before_creating_role" {
 
 #Creating a role
 resource "vault_aws_auth_backend_role" "db_role" {
+  depends_on                      = [time_sleep.wait_before_creating_role]
   backend                         = vault_auth_backend.aws_auth.path
   role                            = "db-role"
   auth_type                       = "iam"
