@@ -188,7 +188,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_db_egress_app" {
 resource "aws_db_instance" "project_rds" {
   allocated_storage      = 10
   db_name                = "projectdb" # The name of the database to create when the DB instance is created. If this parameter is not specified, no database is created in the DB instance
-  db_subnet_group_name   = "c7 DB subnet group"
+  db_subnet_group_name   = "c7-db-group"
   engine                 = "mysql"
   engine_version         = "8.0"
   identifier             = "db-instance"
