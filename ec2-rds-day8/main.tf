@@ -82,7 +82,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_egress_app" {
 
 #template file for ec2 user data
 data "template_file" "vault_agent_aws" {
-  template = file("${path.module}/template/ec2-aws-auth.tftpl")
+  template = file("${path.module}/templates/ec2-aws-auth.tftpl")
   vars = {
     tpl_vault_server_addr = data.terraform_remote_state.hcp_vault.outputs.vault_private_endpoint_url
     MYSQL_HOST            = aws_db_instance.project_rds.address
@@ -117,7 +117,7 @@ resource "aws_instance" "app_aws" {
 
 #template file for ec2 user data
 data "template_file" "vault_agent_approle" {
-  template = file("${path.module}/template/ec2-approle.tftpl")
+  template = file("${path.module}/templates/ec2-approle.tftpl")
   vars = {
     tpl_vault_server_addr = data.terraform_remote_state.hcp_vault.outputs.vault_private_endpoint_url
     login_role_id         = data.terraform_remote_state.approle_auth_method.outputs.role_id

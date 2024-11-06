@@ -58,14 +58,14 @@ data "terraform_remote_state" "approle_auth_method" {
 
 #retriving vpc_owner_id
 data "aws_vpc" "selected" {
-  id = data.terraform_remote_state.vpc-workspace.outputs.vpc_id #retirve vpc_id from peer_vpc_id data output
+  id = data.terraform_remote_state.vpc_workspace.outputs.vpc_id #retirve vpc_id from peer_vpc_id data output
 }
 
 #public subnet for jump server
 data "aws_subnets" "public" {
   filter {
     name   = "vpc-id"
-    values = [data.terraform_remote_state.vpc-workspace.outputs.vpc_id]
+    values = [data.terraform_remote_state.vpc_workspace.outputs.vpc_id]
   }
 
   tags = {
@@ -82,7 +82,7 @@ data "aws_subnet" "public" {
 data "aws_subnets" "private" {
   filter {
     name   = "vpc-id"
-    values = [data.terraform_remote_state.vpc-workspace.outputs.vpc_id]
+    values = [data.terraform_remote_state.vpc_workspace.outputs.vpc_id]
   }
 
   tags = {
