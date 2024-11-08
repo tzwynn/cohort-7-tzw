@@ -6,7 +6,7 @@ resource "vault_database_secrets_mount" "db" {
     name           = "mysql"
     username       = "vault"
     password       = "vault"
-    connection_url = "{{username}}:{{password}}@tcp(${data.terraform_remote_state.ec2-rds-day8.outputs.rds_hostname}:3306)"
+    connection_url = "{{username}}:{{password}}@tcp(${data.terraform_remote_state.ec2-rds-day8.outputs.rds_hostname}:3306)/"
     allowed_roles  = ["*"]
   }
 }
